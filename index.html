@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="es">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navegación Espacial</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000000;
+      cursor: none;
+      font-family: 'Arial', sans-serif;
+    }
+
+    html {
+      height: 100%;
+    }
+
+    #custom-cursor {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s ease;
+    }
+
+    #stars-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    #main-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      transition: opacity 0.5s ease;
+    }
+
+    #main-content.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    h1 {
+      color: white;
+      font-size: 48px;
+      margin-bottom: 60px;
+      text-align: center;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    .social-buttons {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .social-button {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid white;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .social-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+    }
+
+    .social-button.instagram:hover {
+      background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+      border-color: #e6683c;
+    }
+
+    .social-button.tiktok:hover {
+      background: #000000;
+      border-color: #ff0050;
+      box-shadow: 0 0 30px rgba(255, 0, 80, 0.5);
+    }
+
+    .social-button.twitter:hover {
+      background: #1da1f2;
+      border-color: #1da1f2;
+      box-shadow: 0 0 30px rgba(29, 161, 242, 0.5);
+    }
+
+    .social-button.spotify:hover {
+      background: #1db954;
+      border-color: #1db954;
+      box-shadow: 0 0 30px rgba(29, 185, 84, 0.5);
+    }
+
+    .message-section {
+      margin-top: 60px;
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .message-form {
+      width: 100%;
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 15px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid white;
+      border-radius: 10px;
+      color: white;
+      font-size: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .message-input::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .message-input:focus {
+      outline: none;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .send-button {
+      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid white;
+      border-radius: 10px;
+      color: white;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .send-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    .send-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .messages-container {
+      width: 100%;
+      max-height: 300px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .message-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      padding: 15px 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .message-text {
+      color: white;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .message-time {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+    }
+
+    .no-messages {
+      color: rgba(255, 255, 255, 0.6);
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .limit-warning {
+      background: rgba(255, 100, 100, 0.2);
+      border: 1px solid rgba(255, 100, 100, 0.5);
+      border-radius: 8px;
+      padding: 10px 15px;
+      color: #ffaaaa;
+      font-size: 14px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div id="custom-cursor"></div>
+  <div id="stars-container"></div>
+  <div id="main-content">
+   <h1 id="main-title">Bienvenido al Espacio</h1>
+   <div class="social-buttons"><a href="https://www.instagram.com/lio_cortes_/" target="_blank" rel="noopener noreferrer" class="social-button instagram">
+     <svg viewbox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+     </svg></a> <a href="https://www.tiktok.com/@_hekra_" target="_blank" rel="noopener noreferrer" class="social-button tiktok">
+     <svg viewbox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+     </svg></a> <a href="https://x.com/Hekra__" target="_blank" rel="noopener noreferrer" class="social-button twitter">
+     <svg viewbox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+     </svg></a> <a href="https://open.spotify.com/user/313kci42qjlkmj3abe3s2dwy23l4?si=37d353b06fd7402b" target="_blank" rel="noopener noreferrer" class="social-button spotify">
+     <svg viewbox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z" />
+     </svg></a>
+   </div>
+   <div class="message-section">
+    <div id="limit-warning" class="limit-warning" style="display: none;">
+     Límite máximo de 999 mensajes alcanzado. Por favor elimina algunos mensajes primero.
+    </div>
+    <form class="message-form" id="message-form"><input type="text" class="message-input" id="message-input" placeholder="Escribe tu mensaje aquí..." maxlength="500" required> <button type="submit" class="send-button" id="send-button"> <span id="send-button-text">Enviar</span> </button>
+    </form>
+    <div class="messages-container" id="messages-container">
+     <div class="no-messages" id="no-messages">
+      No hay mensajes aún. ¡Escribe el primero!
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      main_title: "Mis redes",
+      message_placeholder: "Escribe tu mensaje aquí...",
+      send_button_text: "Enviar",
+      background_color: "#000000",
+      star_color: "#ffffff",
+      button_border_color: "#ffffff",
+      text_color: "#ffffff",
+      button_background: "rgba(255, 255, 255, 0.1)",
+      font_family: "Arial",
+      font_size: 16
+    };
+
+    let messages = [];
+    let isLoading = false;
+
+    // Crear estrellas
+    function createStars() {
+      const container = document.getElementById('stars-container');
+      const starCount = 150;
+
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        const size = Math.random() * 3 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animationDelay = Math.random() * 3 + 's';
+        
+        container.appendChild(star);
+      }
+    }
+
+    // Cursor personalizado
+    const cursor = document.getElementById('custom-cursor');
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    });
+
+    // Data SDK Handler
+    const dataHandler = {
+      onDataChanged(data) {
+        messages = data || [];
+        renderMessages();
+        updateLimitWarning();
+      }
+    };
+
+    // Funciones de mensajes
+    function renderMessages() {
+      const container = document.getElementById('messages-container');
+      const noMessages = document.getElementById('no-messages');
+      
+      if (messages.length === 0) {
+        noMessages.style.display = 'block';
+        container.innerHTML = '<div class="no-messages" id="no-messages">No hay mensajes aún. ¡Escribe el primero!</div>';
+        return;
+      }
+
+      noMessages.style.display = 'none';
+      
+      // Ordenar mensajes por timestamp (más recientes primero)
+      const sortedMessages = [...messages].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      
+      container.innerHTML = sortedMessages.map(message => `
+        <div class="message-item">
+          <div class="message-text">${escapeHtml(message.message)}</div>
+          <div class="message-time">${formatTime(message.timestamp)}</div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function updateLimitWarning() {
+      const warning = document.getElementById('limit-warning');
+      if (messages.length >= 999) {
+        warning.style.display = 'block';
+      } else {
+        warning.style.display = 'none';
+      }
+    }
+
+    async function sendMessage(messageText) {
+      if (isLoading) return;
+      
+      if (messages.length >= 999) {
+        document.getElementById('limit-warning').style.display = 'block';
+        return;
+      }
+
+      isLoading = true;
+      const sendButton = document.getElementById('send-button');
+      const sendButtonText = document.getElementById('send-button-text');
+      
+      sendButton.disabled = true;
+      sendButtonText.textContent = 'Enviando...';
+
+      const newMessage = {
+        id: Date.now().toString(),
+        message: messageText.trim(),
+        timestamp: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(newMessage);
+      
+      if (result.isOk) {
+        document.getElementById('message-input').value = '';
+      } else {
+        // Mostrar error al usuario
+        const container = document.getElementById('messages-container');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'limit-warning';
+        errorDiv.textContent = 'Error al enviar el mensaje. Inténtalo de nuevo.';
+        errorDiv.style.marginBottom = '15px';
+        container.insertBefore(errorDiv, container.firstChild);
+        
+        setTimeout(() => {
+          if (errorDiv.parentNode) {
+            errorDiv.parentNode.removeChild(errorDiv);
+          }
+        }, 3000);
+      }
+
+      isLoading = false;
+      sendButton.disabled = false;
+      sendButtonText.textContent = window.elementSdk?.config?.send_button_text || defaultConfig.send_button_text;
+    }
+
+    // Event listeners
+    document.getElementById('message-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('message-input');
+      const messageText = input.value.trim();
+      
+      if (messageText) {
+        await sendMessage(messageText);
+      }
+    });
+
+
+
+    async function onConfigChange(config) {
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'Arial, sans-serif';
+      const fontFamily = `${customFont}, ${baseFontStack}`;
+
+      document.body.style.background = config.background_color || defaultConfig.background_color;
+      
+      const stars = document.querySelectorAll('.star');
+      stars.forEach(star => {
+        star.style.background = config.star_color || defaultConfig.star_color;
+      });
+
+      const mainTitle = document.getElementById('main-title');
+      mainTitle.textContent = config.main_title || defaultConfig.main_title;
+      mainTitle.style.color = config.text_color || defaultConfig.text_color;
+      mainTitle.style.fontFamily = fontFamily;
+      mainTitle.style.fontSize = (baseSize * 3) + 'px';
+
+      // Actualizar elementos de mensajes
+      const messageInput = document.getElementById('message-input');
+      if (messageInput) {
+        messageInput.placeholder = config.message_placeholder || defaultConfig.message_placeholder;
+        messageInput.style.borderColor = config.button_border_color || defaultConfig.button_border_color;
+        messageInput.style.color = config.text_color || defaultConfig.text_color;
+        messageInput.style.background = config.button_background || defaultConfig.button_background;
+        messageInput.style.fontFamily = fontFamily;
+        messageInput.style.fontSize = baseSize + 'px';
+      }
+
+      const sendButtonText = document.getElementById('send-button-text');
+      if (sendButtonText) {
+        sendButtonText.textContent = config.send_button_text || defaultConfig.send_button_text;
+      }
+
+      const sendButton = document.getElementById('send-button');
+      if (sendButton) {
+        sendButton.style.borderColor = config.button_border_color || defaultConfig.button_border_color;
+        sendButton.style.color = config.text_color || defaultConfig.text_color;
+        sendButton.style.background = config.button_background || defaultConfig.button_background;
+        sendButton.style.fontFamily = fontFamily;
+        sendButton.style.fontSize = baseSize + 'px';
+      }
+
+      // Actualizar botones sociales
+      const socialButtons = document.querySelectorAll('.social-button');
+      socialButtons.forEach(button => {
+        button.style.borderColor = config.button_border_color || defaultConfig.button_border_color;
+        button.style.color = config.text_color || defaultConfig.text_color;
+        button.style.background = config.button_background || defaultConfig.button_background;
+      });
+
+      // Actualizar mensajes existentes
+      const messageItems = document.querySelectorAll('.message-item');
+      messageItems.forEach(item => {
+        item.style.borderColor = `rgba(${hexToRgb(config.button_border_color || defaultConfig.button_border_color)}, 0.3)`;
+        item.style.background = config.button_background || defaultConfig.button_background;
+        
+        const messageText = item.querySelector('.message-text');
+        if (messageText) {
+          messageText.style.color = config.text_color || defaultConfig.text_color;
+          messageText.style.fontFamily = fontFamily;
+          messageText.style.fontSize = baseSize + 'px';
+        }
+        
+        const messageTime = item.querySelector('.message-time');
+        if (messageTime) {
+          messageTime.style.color = `rgba(${hexToRgb(config.text_color || defaultConfig.text_color)}, 0.6)`;
+          messageTime.style.fontFamily = fontFamily;
+          messageTime.style.fontSize = (baseSize * 0.75) + 'px';
+        }
+      });
+
+      const noMessages = document.getElementById('no-messages');
+      if (noMessages) {
+        noMessages.style.color = `rgba(${hexToRgb(config.text_color || defaultConfig.text_color)}, 0.6)`;
+        noMessages.style.fontFamily = fontFamily;
+        noMessages.style.fontSize = baseSize + 'px';
+      }
+
+      const customCursor = document.getElementById('custom-cursor');
+      customCursor.style.background = config.star_color || defaultConfig.star_color;
+    }
+
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? 
+        `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+        '255, 255, 255';
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.star_color || defaultConfig.star_color,
+              set: (value) => {
+                config.star_color = value;
+                window.elementSdk.setConfig({ star_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.button_border_color || defaultConfig.button_border_color,
+              set: (value) => {
+                config.button_border_color = value;
+                window.elementSdk.setConfig({ button_border_color: value });
+              }
+            },
+            {
+              get: () => config.button_background || defaultConfig.button_background,
+              set: (value) => {
+                config.button_background = value;
+                window.elementSdk.setConfig({ button_background: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["main_title", config.main_title || defaultConfig.main_title],
+          ["message_placeholder", config.message_placeholder || defaultConfig.message_placeholder],
+          ["send_button_text", config.send_button_text || defaultConfig.send_button_text]
+        ])
+      });
+    }
+
+    // Inicializar Data SDK
+    async function initializeApp() {
+      if (window.dataSdk) {
+        const initResult = await window.dataSdk.init(dataHandler);
+        if (!initResult.isOk) {
+          console.error("Error al inicializar Data SDK");
+        }
+      }
+    }
+
+    createStars();
+    initializeApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'997f922647621fe4',t:'MTc2MjA0MzkyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
